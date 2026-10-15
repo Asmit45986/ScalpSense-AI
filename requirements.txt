@@ -1,6 +1,7 @@
 torch
 torchvision
 fastapi
+gdown
 uvicorn
 sqlalchemy
 pydantic
@@ -10,3 +11,4 @@ seaborn
 scikit-learn
 tqdm
 python-multipart
+opencv-python-headless
