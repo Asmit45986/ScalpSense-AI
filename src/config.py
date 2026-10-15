@@ -27,4 +27,4 @@ IMAGE_SIZE = 224
 BATCH_SIZE = 32
 EPOCHS = 15
 LEARNING_RATE = 0.001
-DEVICE = "cuda"  # Will automatically use your RTX 3050 GPU
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu") # Will automatically use your RTX 3050 GPU
