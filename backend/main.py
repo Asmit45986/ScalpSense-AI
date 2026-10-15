@@ -1,6 +1,6 @@
 import os
 import torch
-
+from fastapi.middleware.cors import CORSMiddleware
 import urllib.request
 
 import torchvision.transforms as transforms
@@ -30,15 +30,6 @@ model = None
 grad_cam = None
 
 
-# (baki imports wese hi rahenge)
-
-import os
-import urllib.request
-import torch
-
-import os
-import urllib.request
-import torch
 
 @app.on_event("startup")
 def startup_event():
@@ -92,7 +83,13 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Aap chahein toh specific Vercel URL bhi de sakte hain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 os.makedirs("outputs/uploads", exist_ok=True)
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
