@@ -32,22 +32,31 @@ grad_cam = None
 
 # (baki imports wese hi rahenge)
 
+import os
+import urllib.request
+import torch
+
 @app.on_event("startup")
 def startup_event():
     global model, grad_cam
     init_db()
     
-    # Agar model file local folder me nahi milti (jaise Render par), toh download karein
+    # Ensure directory exists
+    os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+    
+    # Agar model file nahi milti, toh GitHub release se download karein
     if not os.path.exists(MODEL_PATH):
-        print(f"Warning: Model checkpoint not found at {MODEL_PATH}! Downloading from GitHub Release...")
-        os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
-        
-        # Yahan apna GitHub release ka direct download link paste kar diya hai:
+        print(f"Model file not found at {MODEL_PATH}. Downloading from GitHub Release...")
         MODEL_DOWNLOAD_URL = "https://github.com/Asmit45986/ScalpSense-AI/releases/download/v1.0/best_scalp_model.pth"
-        
         try:
-            urllib.request.urlretrieve(MODEL_DOWNLOAD_URL, MODEL_PATH)
-            print("Model successfully downloaded from GitHub!")
+            # User-agent header add karna zaroori hai taaki GitHub download block na kare
+            req = urllib.request.Request(
+                MODEL_DOWNLOAD_URL, 
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
+            with urllib.request.urlopen(req) as response, open(MODEL_PATH, 'wb') as out_file:
+                out_file.write(response.read())
+            print("Model successfully downloaded from GitHub release!")
         except Exception as e:
             print(f"Failed to download model: {e}")
 
