@@ -7,6 +7,9 @@ const predClass = document.getElementById('predClass');
 const predConf = document.getElementById('predConf');
 const heatmapImage = document.getElementById('heatmapImage');
 
+// Live Render Backend URL
+const API_BASE_URL = 'https://scalpsense-ai-2.onrender.com';
+
 let selectedFile = null;
 
 imageInput.addEventListener('change', (e) => {
@@ -36,24 +39,23 @@ async function uploadImage() {
     resultContent.classList.add('hidden');
 
     try {
-        const response = await fetch('http://127.0.0.1:8000/predict/', {
+        const response = await fetch(`${API_BASE_URL}/predict/`, {
             method: 'POST',
             body: formData
         });
 
         const data = await response.json();
-        console.log("Server Response:", data); // Check your F12 console to see exact keys
+        console.log("Server Response:", data);
 
         if (response.ok) {
             resultPlaceholder.classList.add('hidden');
             resultContent.classList.remove('hidden');
             
-            // Adjust keys here if your backend uses different JSON names (e.g., data.class_name or data.heatmap)
             predClass.textContent = data.prediction || data.class_name || "Unknown";
             predConf.textContent = data.confidence ? (data.confidence * 100).toFixed(2) + "%" : "N/A";
             
             if (data.heatmap_url) {
-                heatmapImage.src = `http://127.0.0.1:8000${data.heatmap_url}`;
+                heatmapImage.src = `${API_BASE_URL}${data.heatmap_url}`;
             }
         } else {
             alert("Error: " + (data.detail || "Unknown server error"));
