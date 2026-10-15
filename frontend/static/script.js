@@ -7,8 +7,8 @@ const predClass = document.getElementById('predClass');
 const predConf = document.getElementById('predConf');
 const heatmapImage = document.getElementById('heatmapImage');
 
-// Live Render Backend URL
-const API_BASE_URL = 'https://scalpsense-ai-2.onrender.com';
+// Local Backend URL
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 let selectedFile = null;
 
@@ -38,31 +38,32 @@ async function uploadImage() {
     resultPlaceholder.classList.remove('hidden');
     resultContent.classList.add('hidden');
 
-try {
-    const response = await fetch(`${API_BASE_URL}/predict/`, {
-        method: 'POST',
-        body: formData
-    });
+    try {
+        const response = await fetch(`${API_BASE_URL}/predict/`, {
+            method: 'POST',
+            body: formData
+        });
 
-    const data = await response.json();
-    console.log("Server Response:", data);
+        const data = await response.json();
+        console.log("Server Response:", data);
 
-    if (response.ok) {
-        resultPlaceholder.classList.add('hidden');
-        resultContent.classList.remove('hidden');
-        
-        predClass.textContent = data.prediction || data.class_name || "Unknown";
-        predConf.textContent = data.confidence ? (data.confidence * 100).toFixed(2) + "%" : "N/A";
-        
-        if (data.heatmap_url) {
-            heatmapImage.src = `${API_BASE_URL}${data.heatmap_url}`;
+        if (response.ok) {
+            resultPlaceholder.classList.add('hidden');
+            resultContent.classList.remove('hidden');
+            
+            predClass.textContent = data.prediction || data.class_name || "Unknown";
+            predConf.textContent = data.confidence ? (data.confidence * 100).toFixed(2) + "%" : "N/A";
+            
+            if (data.heatmap_url) {
+                heatmapImage.src = `${API_BASE_URL}${data.heatmap_url}`;
+            }
+        } else {
+            alert("Error: " + (data.detail || "Unknown server error"));
+            resultPlaceholder.textContent = "Failed to analyze image.";
         }
-    } else {
-        alert("Error: " + (data.detail || "Unknown server error"));
-        resultPlaceholder.textContent = "Failed to analyze image.";
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        alert("Failed to process the response from the server.");
+        resultPlaceholder.textContent = "Server response error.";
     }
-} catch (err) {
-    console.error("Fetch Error:", err);
-    alert("Failed to process the response from the server.");
-    resultPlaceholder.textContent = "Server response error.";
 }
