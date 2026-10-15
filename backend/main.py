@@ -36,38 +36,43 @@ import os
 import urllib.request
 import torch
 
+import os
+import urllib.request
+import torch
+
 @app.on_event("startup")
 def startup_event():
     global model, grad_cam
     init_db()
     
-    # Ensure directory exists
+    print(f"Checking model path at: {MODEL_PATH}")
     os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
     
-    # Agar model file nahi milti, toh GitHub release se download karein
     if not os.path.exists(MODEL_PATH):
-        print(f"Model file not found at {MODEL_PATH}. Downloading from GitHub Release...")
+        print(f"Model file not found. Attempting download from GitHub Release...")
         MODEL_DOWNLOAD_URL = "https://github.com/Asmit45986/ScalpSense-AI/releases/download/v1.0/best_scalp_model.pth"
+        
         try:
-            # User-agent header add karna zaroori hai taaki GitHub download block na kare
             req = urllib.request.Request(
                 MODEL_DOWNLOAD_URL, 
                 headers={'User-Agent': 'Mozilla/5.0'}
             )
             with urllib.request.urlopen(req) as response, open(MODEL_PATH, 'wb') as out_file:
                 out_file.write(response.read())
-            print("Model successfully downloaded from GitHub release!")
+            print(f"Successfully downloaded model to {MODEL_PATH}! Size: {os.path.getsize(MODEL_PATH)} bytes")
         except Exception as e:
-            print(f"Failed to download model: {e}")
+            print(f"CRITICAL ERROR downloading model: {str(e)}")
 
     # Load Model
-    model = get_scalp_model(num_classes=len(CLASSES))
-    
-    if os.path.exists(MODEL_PATH):
-        model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
-        print(f"Loaded trained model checkpoint from {MODEL_PATH}")
-    else:
-        print(f"Critical Error: Model checkpoint still missing!")
+    try:
+        model = get_scalp_model(num_classes=len(CLASSES))
+        if os.path.exists(MODEL_PATH):
+            model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
+            print(f"Loaded trained model checkpoint successfully from {MODEL_PATH}")
+        else:
+            print(f"Critical Error: Model file still does not exist at {MODEL_PATH}!")
+    except Exception as e:
+        print(f"Error loading model state dict: {str(e)}")
         
     model.to(DEVICE)
     model.eval()
