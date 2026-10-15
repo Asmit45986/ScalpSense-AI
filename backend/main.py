@@ -40,20 +40,32 @@ def get_db():
 # Load Model into Memory
 # Load Model into Memory
 # Load Model into Memory
+
+
+# Load Model into Memory
 MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
 
 def download_model_if_not_exists():
-    # Agar file exist nahi karti ya file ka size 1MB se chota hai (matlab error page download ho gaya hai)
+    print(f"Checking model path at: {MODEL_PATH}")
+    
+    # Check karein ki file exist karti hai ya nahi, ya phir file ka size bohot chota (corrupt) toh nahi
     if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        os.makedirs("saved_models", exist_ok=True)
-        print("Downloading model from Google Drive...")
+        os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+        print("Model not found locally. Downloading from Google Drive...")
         
         file_id = "11X9HYJx97sspyaHwYkbkP3LXksipas6H"
-        # Ye direct download export URL sabse reliable hota hai large files ke liye
         url = f"https://drive.google.com/uc?export=download&id={file_id}"
         
-        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
-        print("Model downloaded successfully!")
+        try:
+            gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
+            if os.path.exists(MODEL_PATH):
+                print(f"Download finished! File size: {os.path.getsize(MODEL_PATH)} bytes")
+            else:
+                print("Download failed: File still missing after gdown execution.")
+        except Exception as e:
+            print(f"Exception occurred during model download: {e}")
+    else:
+        print(f"Model already exists locally. Size: {os.path.getsize(MODEL_PATH)} bytes")
 
 # Call it on startup
 download_model_if_not_exists()
