@@ -38,20 +38,24 @@ def get_db():
         db.close()
 
 # Load Model into Memory
+# Load Model into Memory
+# Load Model into Memory
 MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
+
 def download_model_if_not_exists():
-    if not os.path.exists(MODEL_PATH):
+    # Agar file exist nahi karti ya file ka size 1MB se chota hai (matlab error page download ho gaya hai)
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
         os.makedirs("saved_models", exist_ok=True)
         print("Downloading model from Google Drive...")
         
-        # Apni Google Drive file ki direct download ID yahan dalein
         file_id = "11X9HYJx97sspyaHwYkbkP3LXksipas6H"
-        url = f"https://drive.google.com/drive/folders/11X9HYJx97sspyaHwYkbkP3LXksipas6H?usp=drive_link"
+        # Ye direct download export URL sabse reliable hota hai large files ke liye
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
         
-        gdown.download(url, MODEL_PATH, quiet=False)
+        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
         print("Model downloaded successfully!")
 
-# FastAPI app start hone se pehle ise call kar lein
+# Call it on startup
 download_model_if_not_exists()
 model = get_scalp_model(num_classes=len(CLASSES))
 
