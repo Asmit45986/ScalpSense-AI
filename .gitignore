@@ -7,6 +7,5 @@ __pycache__/
 # Heavy data & models (Keep out of GitHub)
 data/
 saved_models/
-*.pth
 *.db
 *.sqlite3
