@@ -18,16 +18,63 @@ app = FastAPI(title="Scalp Disorder AI Screening API", version="1.0")
 # Enable CORS right here
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows requests from any origin (localhost:3000, etc.)
+    allow_origins=["*"],  # Allows requests from any origin
     allow_credentials=True,
     allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
 )
 
-# Initialize SQLite database table on startup
+# Load Model Path Config
+MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
+
+def download_model_if_not_exists():
+    print(f"=== CHECKING MODEL PATH: {MODEL_PATH} ===")
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
+        os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+        print("Model file missing or incomplete. Downloading from Google Drive...")
+        
+        file_id = "11X9HYJx97sspyaHwYkbkP3LXksipas6H"
+        url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+        try:
+            gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
+            if os.path.exists(MODEL_PATH):
+                print(f"SUCCESS: Model downloaded. Size: {os.path.getsize(MODEL_PATH)} bytes")
+            else:
+                print("ERROR: Download finished but file does not exist.")
+        except Exception as e:
+            print(f"CRITICAL ERROR during gdown: {e}")
+    else:
+        print(f"Model already exists locally. Size: {os.path.getsize(MODEL_PATH)} bytes")
+
+# Global variables for model and Grad-CAM
+model = None
+grad_cam = None
+
+# Initialize SQLite database table & Download Model on startup
 @app.on_event("startup")
 def startup_event():
+    global model, grad_cam
     init_db()
+    
+    # Download model if missing
+    download_model_if_not_exists()
+    
+    # Load Model into Memory
+    model = get_scalp_model(num_classes=len(CLASSES))
+    
+    if os.path.exists(MODEL_PATH) and os.path.getsize(MODEL_PATH) > 1000000:
+        model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
+        print(f"Loaded trained model checkpoint from {MODEL_PATH}")
+    else:
+        print("Warning: Model checkpoint not found or invalid during load!")
+        
+    model.to(DEVICE)
+    model.eval()
+    
+    # Identify target convolutional layer for Grad-CAM in MobileNetV2
+    target_layer = model.features[-1]
+    grad_cam = GradCAM(model, target_layer)
 
 # Dependency to get DB session
 def get_db():
@@ -36,53 +83,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
-# Load Model into Memory
-# Load Model into Memory
-# Load Model into Memory
-
-
-# Load Model into Memory
-MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
-
-def download_model_if_not_exists():
-    print(f"Checking model path at: {MODEL_PATH}")
-    
-    # Check karein ki file exist karti hai ya nahi, ya phir file ka size bohot chota (corrupt) toh nahi
-    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
-        print("Model not found locally. Downloading from Google Drive...")
-        
-        file_id = "11X9HYJx97sspyaHwYkbkP3LXksipas6H"
-        url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
-        try:
-            gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
-            if os.path.exists(MODEL_PATH):
-                print(f"Download finished! File size: {os.path.getsize(MODEL_PATH)} bytes")
-            else:
-                print("Download failed: File still missing after gdown execution.")
-        except Exception as e:
-            print(f"Exception occurred during model download: {e}")
-    else:
-        print(f"Model already exists locally. Size: {os.path.getsize(MODEL_PATH)} bytes")
-
-# Call it on startup
-download_model_if_not_exists()
-model = get_scalp_model(num_classes=len(CLASSES))
-
-if os.path.exists(MODEL_PATH):
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
-    print(f"Loaded trained model checkpoint from {MODEL_PATH}")
-else:
-    print("Warning: Model checkpoint not found! Train the model first using src.train.")
-
-model.to(DEVICE)
-model.eval()
-
-# Identify target convolutional layer for Grad-CAM in MobileNetV2
-target_layer = model.features[-1]
-grad_cam = GradCAM(model, target_layer)
 
 # Image preprocessing pipeline for inference
 transform = transforms.Compose([
@@ -95,12 +95,10 @@ transform = transforms.Compose([
 os.makedirs("outputs/uploads", exist_ok=True)
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
-# (Your @app.post("/predict/") and @app.get("/history/") routes follow below...)
-
 @app.post("/predict/")
 async def predict_scalp_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    if not os.path.exists(MODEL_PATH):
-        raise HTTPException(status_code=400, detail="Model checkpoint not found. Please run training first.")
+    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
+        raise HTTPException(status_code=400, detail="Model checkpoint not found or invalid. Please check server logs.")
     
     # Save uploaded file temporarily
     file_path = os.path.join("outputs/uploads", file.filename)
@@ -118,7 +116,7 @@ async def predict_scalp_image(file: UploadFile = File(...), db: Session = Depend
         confidence, pred_idx = torch.max(probabilities, dim=0)
         
     predicted_label = CLASSES[pred_idx.item()]
-    conf_score = round(confidence.item(), 4) # Returned as decimal (e.g., 0.9250) for frontend calculation
+    conf_score = round(confidence.item(), 4) # Returned as decimal for frontend calculation
     
     # Generate Grad-CAM heatmap
     heatmap, _ = grad_cam(input_tensor, class_idx=pred_idx.item())
