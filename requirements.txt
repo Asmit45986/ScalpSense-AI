@@ -1,0 +1,12 @@
+torch
+torchvision
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+opencv-python
+matplotlib
+seaborn
+scikit-learn
+tqdm
+python-multipart

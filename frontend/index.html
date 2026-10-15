@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scalp Disorder AI Screening System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <div class="max-w-4xl mx-auto p-6">
+        <header class="text-center my-8">
+            <h1 class="text-3xl font-bold text-blue-600">AI-Powered Scalp Disorder Screening</h1>
+            <p class="text-gray-600 mt-2">Upload a scalp photograph for early risk assessment and Grad-CAM explainability analysis.</p>
+        </header>
+
+        <div class="bg-white p-6 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Upload Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Upload Scalp Image</h2>
+                <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4"/>
+                <div id="imagePreviewContainer" class="border-2 border-dashed border-gray-300 rounded-lg h-64 flex items-center justify-center overflow-hidden bg-gray-50">
+                    <p id="placeholderText" class="text-gray-400">Image preview will appear here</p>
+                    <img id="imagePreview" class="hidden h-full w-full object-cover" />
+                </div>
+                <button onclick="uploadImage()" class="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition">Analyze Scalp</button>
+            </div>
+
+            <!-- Results Section -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Analysis Results</h2>
+                <div id="resultsContainer" class="bg-gray-50 p-4 rounded-lg h-64 flex flex-col justify-center items-center text-center border border-gray-200">
+                    <p id="resultPlaceholder" class="text-gray-400">Awaiting image upload...</p>
+                    <div id="resultContent" class="hidden w-full text-left">
+                        <p class="mb-2"><strong>Prediction:</strong> <span id="predClass" class="text-blue-600 font-bold"></span></p>
+                        <p class="mb-4"><strong>Confidence:</strong> <span id="predConf" class="text-green-600 font-bold"></span></p>
+                        <p class="font-semibold mb-1">Grad-CAM Heatmap Overlay:</p>
+                        <img id="heatmapImage" class="w-full h-36 object-contain rounded border bg-black" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

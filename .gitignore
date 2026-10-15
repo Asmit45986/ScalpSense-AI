@@ -1,0 +1,12 @@
+# Python / Environments
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Heavy data & models (Keep out of GitHub)
+data/
+saved_models/
+*.pth
+*.db
+*.sqlite3
