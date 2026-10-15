@@ -1,5 +1,6 @@
 import os
 import torch
+import gdown
 import torchvision.transforms as transforms
 from PIL import Image
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
@@ -38,6 +39,20 @@ def get_db():
 
 # Load Model into Memory
 MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
+def download_model_if_not_exists():
+    if not os.path.exists(MODEL_PATH):
+        os.makedirs("saved_models", exist_ok=True)
+        print("Downloading model from Google Drive...")
+        
+        # Apni Google Drive file ki direct download ID yahan dalein
+        file_id = "11X9HYJx97sspyaHwYkbkP3LXksipas6H"
+        url = f"https://drive.google.com/drive/folders/11X9HYJx97sspyaHwYkbkP3LXksipas6H?usp=drive_link"
+        
+        gdown.download(url, MODEL_PATH, quiet=False)
+        print("Model downloaded successfully!")
+
+# FastAPI app start hone se pehle ise call kar lein
+download_model_if_not_exists()
 model = get_scalp_model(num_classes=len(CLASSES))
 
 if os.path.exists(MODEL_PATH):
