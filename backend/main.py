@@ -29,7 +29,12 @@ MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
 model = None
 grad_cam = None
 
-
+import gc
+# Prediction aur Grad-CAM ke turant baad memory free karne ke liye
+del input_tensor
+del outputs
+del heatmap
+gc.collect()
 
 @app.on_event("startup")
 def startup_event():
