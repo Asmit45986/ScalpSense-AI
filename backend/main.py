@@ -1,5 +1,8 @@
 import os
 import torch
+
+import urllib.request
+
 import torchvision.transforms as transforms
 from PIL import Image
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
@@ -26,19 +29,36 @@ MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
 model = None
 grad_cam = None
 
+
+# (baki imports wese hi rahenge)
+
 @app.on_event("startup")
 def startup_event():
     global model, grad_cam
     init_db()
     
-    # Load Model directly from local directory
+    # Agar model file local folder me nahi milti (jaise Render par), toh download karein
+    if not os.path.exists(MODEL_PATH):
+        print(f"Warning: Model checkpoint not found at {MODEL_PATH}! Downloading from GitHub Release...")
+        os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+        
+        # Yahan apna GitHub release ka direct download link paste kar diya hai:
+        MODEL_DOWNLOAD_URL = "https://github.com/Asmit45986/ScalpSense-AI/releases/download/v1.0/best_scalp_model.pth"
+        
+        try:
+            urllib.request.urlretrieve(MODEL_DOWNLOAD_URL, MODEL_PATH)
+            print("Model successfully downloaded from GitHub!")
+        except Exception as e:
+            print(f"Failed to download model: {e}")
+
+    # Load Model
     model = get_scalp_model(num_classes=len(CLASSES))
     
     if os.path.exists(MODEL_PATH):
         model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
         print(f"Loaded trained model checkpoint from {MODEL_PATH}")
     else:
-        print(f"Warning: Model checkpoint not found at {MODEL_PATH}!")
+        print(f"Critical Error: Model checkpoint still missing!")
         
     model.to(DEVICE)
     model.eval()
