@@ -1,6 +1,5 @@
 import os
 import torch
-import gdown
 import torchvision.transforms as transforms
 from PIL import Image
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
@@ -12,71 +11,41 @@ from src.gradcam import GradCAM, generate_heatmap_overlay
 from backend.database import SessionLocal, init_db, ScanRecord
 from fastapi.middleware.cors import CORSMiddleware
 
-# Initialize app ONCE with full settings
 app = FastAPI(title="Scalp Disorder AI Screening API", version="1.0")
 
-# Enable CORS right here
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows requests from any origin
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# Load Model Path Config
 MODEL_PATH = os.path.join(SAVED_MODELS_DIR, "best_scalp_model.pth")
 
-def download_model_if_not_exists():
-    print(f"=== CHECKING MODEL PATH: {MODEL_PATH} ===")
-    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
-        print("Model file missing or incomplete. Downloading from Google Drive...")
-        
-        file_id = "11X9HYJx97sspyaHwYkbkP3LXksipas6H"
-        url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
-        try:
-            gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
-            if os.path.exists(MODEL_PATH):
-                print(f"SUCCESS: Model downloaded. Size: {os.path.getsize(MODEL_PATH)} bytes")
-            else:
-                print("ERROR: Download finished but file does not exist.")
-        except Exception as e:
-            print(f"CRITICAL ERROR during gdown: {e}")
-    else:
-        print(f"Model already exists locally. Size: {os.path.getsize(MODEL_PATH)} bytes")
-
-# Global variables for model and Grad-CAM
 model = None
 grad_cam = None
 
-# Initialize SQLite database table & Download Model on startup
 @app.on_event("startup")
 def startup_event():
     global model, grad_cam
     init_db()
     
-    # Download model if missing
-    download_model_if_not_exists()
-    
-    # Load Model into Memory
+    # Load Model directly from local directory
     model = get_scalp_model(num_classes=len(CLASSES))
     
-    if os.path.exists(MODEL_PATH) and os.path.getsize(MODEL_PATH) > 1000000:
+    if os.path.exists(MODEL_PATH):
         model.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
         print(f"Loaded trained model checkpoint from {MODEL_PATH}")
     else:
-        print("Warning: Model checkpoint not found or invalid during load!")
+        print(f"Warning: Model checkpoint not found at {MODEL_PATH}!")
         
     model.to(DEVICE)
     model.eval()
     
-    # Identify target convolutional layer for Grad-CAM in MobileNetV2
     target_layer = model.features[-1]
     grad_cam = GradCAM(model, target_layer)
 
-# Dependency to get DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -84,41 +53,35 @@ def get_db():
     finally:
         db.close()
 
-# Image preprocessing pipeline for inference
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
-# Mount static folder to serve uploaded images and heatmaps
 os.makedirs("outputs/uploads", exist_ok=True)
 app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
 
 @app.post("/predict/")
 async def predict_scalp_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    if not os.path.exists(MODEL_PATH) or os.path.getsize(MODEL_PATH) < 1000000:
-        raise HTTPException(status_code=400, detail="Model checkpoint not found or invalid. Please check server logs.")
+    if not os.path.exists(MODEL_PATH):
+        raise HTTPException(status_code=400, detail="Model checkpoint not found.")
     
-    # Save uploaded file temporarily
     file_path = os.path.join("outputs/uploads", file.filename)
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
         
-    # Open and transform image
     raw_img = Image.open(file_path).convert("RGB")
     input_tensor = transform(raw_img).unsqueeze(0).to(DEVICE)
     
-    # Run prediction & Grad-CAM
     with torch.no_grad():
         outputs = model(input_tensor)
         probabilities = torch.nn.functional.softmax(outputs, dim=1)[0]
         confidence, pred_idx = torch.max(probabilities, dim=0)
         
     predicted_label = CLASSES[pred_idx.item()]
-    conf_score = round(confidence.item(), 4) # Returned as decimal for frontend calculation
+    conf_score = round(confidence.item(), 4)
     
-    # Generate Grad-CAM heatmap
     heatmap, _ = grad_cam(input_tensor, class_idx=pred_idx.item())
     superimposed_img = generate_heatmap_overlay(file_path, heatmap)
     
@@ -127,7 +90,6 @@ async def predict_scalp_image(file: UploadFile = File(...), db: Session = Depend
     import cv2
     cv2.imwrite(heatmap_path, superimposed_img)
     
-    # Save record to database
     db_record = ScanRecord(
         filename=file.filename,
         predicted_class=predicted_label,
