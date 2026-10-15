@@ -38,32 +38,31 @@ async function uploadImage() {
     resultPlaceholder.classList.remove('hidden');
     resultContent.classList.add('hidden');
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/predict/`, {
-            method: 'POST',
-            body: formData
-        });
+try {
+    const response = await fetch(`${API_BASE_URL}/predict/`, {
+        method: 'POST',
+        body: formData
+    });
 
-        const data = await response.json();
-        console.log("Server Response:", data);
+    const data = await response.json();
+    console.log("Server Response:", data);
 
-        if (response.ok) {
-            resultPlaceholder.classList.add('hidden');
-            resultContent.classList.remove('hidden');
-            
-            predClass.textContent = data.prediction || data.class_name || "Unknown";
-            predConf.textContent = data.confidence ? (data.confidence * 100).toFixed(2) + "%" : "N/A";
-            
-            if (data.heatmap_url) {
-                heatmapImage.src = `${API_BASE_URL}${data.heatmap_url}`;
-            }
-        } else {
-            alert("Error: " + (data.detail || "Unknown server error"));
-            resultPlaceholder.textContent = "Failed to analyze image.";
+    if (response.ok) {
+        resultPlaceholder.classList.add('hidden');
+        resultContent.classList.remove('hidden');
+        
+        predClass.textContent = data.prediction || data.class_name || "Unknown";
+        predConf.textContent = data.confidence ? (data.confidence * 100).toFixed(2) + "%" : "N/A";
+        
+        if (data.heatmap_url) {
+            heatmapImage.src = `${API_BASE_URL}${data.heatmap_url}`;
         }
-    } catch (err) {
-        console.error("Fetch Error:", err);
-        alert("Failed to process the response from the server.");
-        resultPlaceholder.textContent = "Server response error.";
+    } else {
+        alert("Error: " + (data.detail || "Unknown server error"));
+        resultPlaceholder.textContent = "Failed to analyze image.";
     }
+} catch (err) {
+    console.error("Fetch Error:", err);
+    alert("Failed to process the response from the server.");
+    resultPlaceholder.textContent = "Server response error.";
 }
