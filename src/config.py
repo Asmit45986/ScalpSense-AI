@@ -1,4 +1,5 @@
 import os
+import torch  # <--- Add this line here!
 
 # Base paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
