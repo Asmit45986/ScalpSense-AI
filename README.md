@@ -1,5 +1,3 @@
-<div align="center">
-
 # AI-Based Early Detection System for Hair and Scalp Disorders
 
 **An explainable deep-learning web application for five-class scalp image classification**
@@ -259,20 +257,35 @@ The application description includes an output naming pattern such as `heatmap_<
 
 **Important:** Grad-CAM does not eliminate the black-box problem, prove causal reasoning, or confirm that the model has identified a lesion. It is a debugging and interpretability aid, not a clinical validation method.
 
-## Evaluation and Results
-
-Use an isolated test set and report measured results only. The project information provided here does not include numerical evaluation outputs, so the table below intentionally contains placeholders.
-
-| Evaluation measure | Result |
-|---|---|
-| Test-set size | `ADD ACTUAL COUNT` |
-| Accuracy | `ADD MEASURED VALUE` |
-| Macro precision | `ADD MEASURED VALUE` |
-| Macro recall | `ADD MEASURED VALUE` |
-| Macro F1-score | `ADD MEASURED VALUE` |
-| Weighted F1-score | `ADD MEASURED VALUE` |
-| Average inference latency | `ADD MEASURED VALUE AND UNIT` |
-| Test hardware | `ADD CPU/GPU DETAILS` |
+Performance Evaluation: Metrics, Confusion Matrix and Comparison
+1. Validation Accuracy
+Validation Accuracy: 89.63%
+2. Detailed Classification Report
+Class	Precision	Recall	F1-Score	Support
+Alopecia Areata	0.97	0.95	0.96	291
+Androgenetic Alopecia	0.83	0.88	0.85	125
+Normal Scalp	1.00	0.99	0.99	72
+Psoriasis	0.87	0.90	0.88	258
+Seborrheic Dermatitis	0.81	0.77	0.79	151
+Accuracy	—	—	0.90	897
+Macro Average	0.90	0.90	0.90	897
+Weighted Average	0.90	0.90	0.90	897
+3. Confusion Matrix
+The confusion matrix compares the actual scalp disorder labels with the labels predicted by the model.
+Actual Label ↓ / Predicted Label →	Alopecia Areata	Androgenetic Alopecia	Normal Scalp	Psoriasis	Seborrheic Dermatitis
+Alopecia Areata	275	11	0	3	2
+Androgenetic Alopecia	4	110	0	6	5
+Normal Scalp	1	0	71	0	0
+Psoriasis	2	4	0	231	21
+Seborrheic Dermatitis	1	8	0	25	117
+4. Performance Comparison
+- Best-performing class: Normal Scalp, with an F1-score of 0.99.
+- Alopecia Areata: Strong classification performance, with an F1-score of 0.96.
+- Psoriasis: Good performance, with an F1-score of 0.88.
+- Androgenetic Alopecia: Moderate-to-good performance, with an F1-score of 0.85.
+- Seborrheic Dermatitis: Lowest performance, with an F1-score of 0.79, indicating scope for improvement.
+Observation: The confusion matrix shows that the most notable misclassification occurs between Psoriasis and Seborrheic Dermatitis. The model correctly classifies 231 Psoriasis samples and 117 Seborrheic Dermatitis samples. Improving the distinction between these two visually similar conditions may help enhance overall model performance.
+Note: The classification report shows an accuracy of approximately 90%, while the validation accuracy is reported as 89.63%. These figures are close, but confirm that both metrics were calculated on the same evaluation dataset before reporting them together in a research paper.
 
 ### Metrics to report
 
@@ -502,15 +515,4 @@ Do not commit virtual environments, local database files containing personal dat
 - Minimize collection of sensitive information, secure any retained records, and document retention and deletion practices.
 - Do not claim fairness, clinical validity, or generalizability without appropriate evidence.
 
-## Contributing
 
-Contributions that improve reproducibility, tests, documentation, error handling, accessibility, and responsible evaluation are welcome.
-
-1. Open an issue describing the proposed change.
-2. Create a focused branch.
-3. Add or update tests and documentation.
-4. Submit a pull request explaining the change and how it was tested.
-
-## License
-
-Add a `LICENSE` file before publishing and select a licence appropriate to your code and any third-party assets or datasets. Do not assume the dataset's licence permits redistribution just because it is available for research.
