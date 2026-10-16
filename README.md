@@ -258,34 +258,57 @@ The application description includes an output naming pattern such as `heatmap_<
 **Important:** Grad-CAM does not eliminate the black-box problem, prove causal reasoning, or confirm that the model has identified a lesion. It is a debugging and interpretability aid, not a clinical validation method.
 
 Performance Evaluation: Metrics, Confusion Matrix and Comparison
-1. Validation Accuracy
-Validation Accuracy: 89.63%
-2. Detailed Classification Report
-Class	Precision	Recall	F1-Score	Support
-Alopecia Areata	0.97	0.95	0.96	291
-Androgenetic Alopecia	0.83	0.88	0.85	125
-Normal Scalp	1.00	0.99	0.99	72
-Psoriasis	0.87	0.90	0.88	258
-Seborrheic Dermatitis	0.81	0.77	0.79	151
-Accuracy	—	—	0.90	897
-Macro Average	0.90	0.90	0.90	897
-Weighted Average	0.90	0.90	0.90	897
-3. Confusion Matrix
-The confusion matrix compares the actual scalp disorder labels with the labels predicted by the model.
-Actual Label ↓ / Predicted Label →	Alopecia Areata	Androgenetic Alopecia	Normal Scalp	Psoriasis	Seborrheic Dermatitis
-Alopecia Areata	275	11	0	3	2
-Androgenetic Alopecia	4	110	0	6	5
-Normal Scalp	1	0	71	0	0
-Psoriasis	2	4	0	231	21
-Seborrheic Dermatitis	1	8	0	25	117
-4. Performance Comparison
-- Best-performing class: Normal Scalp, with an F1-score of 0.99.
-- Alopecia Areata: Strong classification performance, with an F1-score of 0.96.
-- Psoriasis: Good performance, with an F1-score of 0.88.
-- Androgenetic Alopecia: Moderate-to-good performance, with an F1-score of 0.85.
-- Seborrheic Dermatitis: Lowest performance, with an F1-score of 0.79, indicating scope for improvement.
-Observation: The confusion matrix shows that the most notable misclassification occurs between Psoriasis and Seborrheic Dermatitis. The model correctly classifies 231 Psoriasis samples and 117 Seborrheic Dermatitis samples. Improving the distinction between these two visually similar conditions may help enhance overall model performance.
-Note: The classification report shows an accuracy of approximately 90%, while the validation accuracy is reported as 89.63%. These figures are close, but confirm that both metrics were calculated on the same evaluation dataset before reporting them together in a research paper.
+
+## Performance Evaluation
+
+### 1. Validation Accuracy
+
+| Metric | Score |
+|---|---:|
+| Validation Accuracy | 89.63% |
+
+### 2. Classification Report
+
+| Class | Precision | Recall | F1-Score | Support |
+|---|---:|---:|---:|---:|
+| Alopecia Areata | 0.97 | 0.95 | 0.96 | 291 |
+| Androgenetic Alopecia | 0.83 | 0.88 | 0.85 | 125 |
+| Normal Scalp | 1.00 | 0.99 | 0.99 | 72 |
+| Psoriasis | 0.87 | 0.90 | 0.88 | 258 |
+| Seborrheic Dermatitis | 0.81 | 0.77 | 0.79 | 151 |
+| **Accuracy** | — | — | **0.90** | **897** |
+| **Macro Average** | **0.90** | **0.90** | **0.90** | **897** |
+| **Weighted Average** | **0.90** | **0.90** | **0.90** | **897** |
+
+### 3. Confusion Matrix
+
+Rows represent actual labels, and columns represent predicted labels.
+
+| Actual \ Predicted | Alopecia Areata | Androgenetic Alopecia | Normal Scalp | Psoriasis | Seborrheic Dermatitis |
+|---|---:|---:|---:|---:|---:|
+| Alopecia Areata | 275 | 11 | 0 | 3 | 2 |
+| Androgenetic Alopecia | 4 | 110 | 0 | 6 | 5 |
+| Normal Scalp | 1 | 0 | 71 | 0 | 0 |
+| Psoriasis | 2 | 4 | 0 | 231 | 21 |
+| Seborrheic Dermatitis | 1 | 8 | 0 | 25 | 117 |
+
+### 4. Performance Analysis
+
+| Class | Performance | Observation |
+|---|---|---|
+| Normal Scalp | Best (F1: 0.99) | Highest classification performance |
+| Alopecia Areata | Strong (F1: 0.96) | High precision and recall |
+| Psoriasis | Good (F1: 0.88) | Some confusion with Seborrheic Dermatitis |
+| Androgenetic Alopecia | Moderate-to-good (F1: 0.85) | Some misclassification across other classes |
+| Seborrheic Dermatitis | Needs improvement (F1: 0.79) | Lowest F1-score among the five classes |
+
+### Key Observations
+
+- **Best-performing class:** Normal Scalp, with an F1-score of 0.99.
+- **Strong classification:** Alopecia Areata achieved an F1-score of 0.96.
+- **Main challenge:** Confusion between Psoriasis and Seborrheic Dermatitis.
+- The model correctly classified 231 Psoriasis samples and 117 Seborrheic Dermatitis samples.
+- Improving discrimination between these visually similar conditions is a key opportunity for future model development.
 
 ### Metrics to report
 
